@@ -62,9 +62,6 @@ class UDPManager: ObservableObject {
             
             print("[Swift] Encryption details:")
             print("Nonce (12 bytes): \(sealedBox.nonce.withUnsafeBytes { Data($0).hexString })")
-            print("Ciphertext (\(sealedBox.ciphertext.count) bytes): \(sealedBox.ciphertext.hexString)")
-            print("Tag (16 bytes): \(sealedBox.tag.hexString)")
-            print("Combined (\(combined.count) bytes): \(combined.hexString)")
             
             return (combined, Data(sealedBox.nonce), sealedBox.tag)
         } catch {
@@ -97,8 +94,6 @@ class UDPManager: ObservableObject {
                     print("Error sending message: \(error.localizedDescription)")
                 } else {
                     print("Message sent successfully")
-                    print("Nonce: \(nonce.hexString)")
-                    print("Tag: \(tag.hexString)")
                 }
             }
         })

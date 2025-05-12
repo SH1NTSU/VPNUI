@@ -106,18 +106,51 @@ struct ContentView: View {
             }
         }
     }
-    private func toggleConnection() {
-        if udpManager.isConnected {
-            udpManager.disconnect()
-        } else {
-            udpManager.setupConnection()
-        }
+//    private func toggleConnection() {
+//        guard let localIP = Packets.getLocalIPAddress() else {
+//            print("Could not get local IP address")
+//            return
+//        }
+//        
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            udpManager.sendMessage("Hello World!")
-        }
+//            if udpManager.isConnected {
+//                udpManager.disconnect()
+//                print("Disconnected")
+//            } else {
+//                udpManager.setupConnection()
+//                
+//                udpManager.sendMessage(packet.toString())
+//                print("Connected send Packet: \(packet.toString())")
+//                }
+//            }
+//        }
+    private func toggleConnection() {
+            guard let localIP = Packets.getLocalIPAddress() else {
+                print("Could not get local IP address")
+                return
+            }
+            Packets.getLocalPort { localPort in
+            guard let port = localPort else {
+                print("Could not get local port")
+                return
+            }
+            
+            let packet = Packets(ip: localIP, port: port)
+            
+            if udpManager.isConnected {
+                udpManager.disconnect()
+            } else {
+                udpManager.setupConnection()
+            }
+            
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                udpManager.sendMessage(packet.toString())
+                                       }
+            }
     }
 }
+
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
