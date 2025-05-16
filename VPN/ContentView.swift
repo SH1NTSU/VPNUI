@@ -49,7 +49,7 @@ struct ContentView: View {
                         }
                         
                         Button(action: {
-                            toggleConnection()
+                            udpManager.isConnected ? toggleDisconnect() : toggleConnection()
                         }) {
                             ZStack {
                                 Circle()
@@ -148,7 +148,21 @@ struct ContentView: View {
                                        }
             }
     }
+    
+    private func toggleDisconnect() {
+        guard udpManager.isConnected else {
+            print("Not connected")
+            return
+        }
+
+        // Send disconnect message
+        udpManager.sendMessage("DISCONNECT")
+        udpManager.disconnect()
+        print("Disconnected from server")
+    }
 }
+
+
 
 
 
