@@ -59,7 +59,7 @@ class UDPManager: ObservableObject {
                 print("Error: Failed to get combined data")
                 return nil
             }
-            
+            print("length: \(combined.count)")
             print("[Swift] Encryption details:")
             print("Nonce (12 bytes): \(sealedBox.nonce.withUnsafeBytes { Data($0).hexString })")
             
@@ -70,41 +70,63 @@ class UDPManager: ObservableObject {
         }
     }
     
-    func sendMessage(_ message: String) {
+    func sendMessage(_ message: String, encrypted: Bool = true, completion: ((Bool) -> Void)? = nil) {
         guard let connection = connection else {
             print("Error: No active connection")
+            completion?(false)
             return
         }
         
         guard connection.state == .ready else {
             print("Error: Connection is not ready")
+            completion?(false)
             return
         }
         
-        guard let (combined, nonce, tag) = encryptMessage(message) else {
-            print("Error: Failed to encrypt message")
-            return
+        let data: Data
+        if encrypted {
+            guard let (combined, _, _) = encryptMessage(message) else {
+                print("Error: Failed to encrypt message")
+                completion?(false)
+                return
+            }
+            data = combined
+        } else {
+            // Plain text mode
+            data = Data(message.utf8)
+            print("Sending plain text message: \(message), length: \(data.count)")
         }
         
-        // Send the encrypted data
-        connection.send(content: combined, completion: .contentProcessed { [weak self] error in
+        connection.send(content: data, completion: .contentProcessed { [weak self] error in
             DispatchQueue.main.async {
                 if let error = error {
                     self?.connectionStatus = "Send Failed"
                     print("Error sending message: \(error.localizedDescription)")
+                    completion?(false)
                 } else {
                     print("Message sent successfully")
+                    completion?(true)
                 }
             }
         })
     }
-    
-    func disconnect() {
-        connection?.cancel()
-        connection = nil
-        connectionStatus = "Disconnected"
-        isConnected = false
-        print("Connection terminated")
+
+    func disconnect(afterSendingMessage message: String? = nil, completion: ((Bool) -> Void)? = nil) {
+        if let message = message {
+            sendMessage(message) { [weak self] success in
+                self?.connection?.cancel()
+                self?.connection = nil
+                self?.connectionStatus = "Disconnected"
+                self?.isConnected = false
+                completion?(success)
+            }
+        } else {
+            connection?.cancel()
+            connection = nil
+            connectionStatus = "Disconnected"
+            isConnected = false
+            completion?(true)
+        }
     }
 }
 

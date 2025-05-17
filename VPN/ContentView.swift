@@ -11,7 +11,7 @@ struct ContentView: View {
             .edgesIgnoringSafeArea(.all)
             
             VStack {
-    
+                
                 HStack {
                     Text("SelfVPN")
                         .font(.title2)
@@ -106,63 +106,78 @@ struct ContentView: View {
             }
         }
     }
-//    private func toggleConnection() {
-//        guard let localIP = Packets.getLocalIPAddress() else {
-//            print("Could not get local IP address")
-//            return
-//        }
-//        
-
-//            if udpManager.isConnected {
-//                udpManager.disconnect()
-//                print("Disconnected")
-//            } else {
-//                udpManager.setupConnection()
-//                
-//                udpManager.sendMessage(packet.toString())
-//                print("Connected send Packet: \(packet.toString())")
-//                }
-//            }
-//        }
+    //    private func toggleConnection() {
+    //        guard let localIP = Packets.getLocalIPAddress() else {
+    //            print("Could not get local IP address")
+    //            return
+    //        }
+    //
+    
+    //            if udpManager.isConnected {
+    //                udpManager.disconnect()
+    //                print("Disconnected")
+    //            } else {
+    //                udpManager.setupConnection()
+    //
+    //                udpManager.sendMessage(packet.toString())
+    //                print("Connected send Packet: \(packet.toString())")
+    //                }
+    //            }
+    //        }
     private func toggleConnection() {
-            guard let localIP = Packets.getLocalIPAddress() else {
-                print("Could not get local IP address")
-                return
-            }
-            Packets.getLocalPort { localPort in
+        guard let localIP = Packets.getLocalIPAddress() else {
+            print("Could not get local IP address")
+            return
+        }
+        
+        Packets.getLocalPort { localPort in
             guard let port = localPort else {
                 print("Could not get local port")
                 return
             }
             
             let packet = Packets(ip: localIP, port: port)
+            let ident = "connect"
             
-            if udpManager.isConnected {
-                udpManager.disconnect()
-            } else {
+            // Only send message if not already connected
+            if !udpManager.isConnected {
                 udpManager.setupConnection()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+                    udpManager.sendMessage(packet.toString(ident: ident))
+                }
             }
-            
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-                udpManager.sendMessage(packet.toString())
-                                       }
-            }
+        }
     }
+    
     
     private func toggleDisconnect() {
         guard udpManager.isConnected else {
-            print("Not connected")
+            print("⚠️ Not currently connected")
             return
         }
-
-        // Send disconnect message
-        udpManager.sendMessage("DISCONNECT")
-        udpManager.disconnect()
-        print("Disconnected from server")
+        
+        guard let localIP = Packets.getLocalIPAddress() else {
+            print("⚠️ Could not get local IP for disconnect")
+            return
+        }
+        
+        let message = localIP + "DISCONNECT"
+        print("Sending plain disconnect message: \(message)")
+        
+        udpManager.sendMessage(message, encrypted: false) { success in
+            DispatchQueue.main.async {
+                if success {
+                    print("🔴 Disconnect message sent successfully")
+                } else {
+                    print("⚠️ Failed to send disconnect message")
+                }
+                // Disconnect regardless of message success
+                self.udpManager.disconnect()
+            }
+        }
     }
+    
 }
-
-
 
 
 

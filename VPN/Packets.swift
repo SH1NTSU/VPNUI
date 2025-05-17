@@ -63,8 +63,17 @@ class Packets {
     }
     
     // Convert Packet to String
-    func toString() -> String {
-        return "\(self.ip):\(self.port)"
+    func toString(ident: String) -> String {
+        switch ident {
+        case "connect":
+            return "\(self.ip):\(self.port)"
+        case "disconnect":
+            return "\(self.ip)"
+        default :
+            return "\(self.ip):\(self.port)"
+        
+        }
+        
     }
 }
 
